@@ -115,5 +115,8 @@ venv.bak/
 config.ini
 test.*
 .cache
+pretrained_models/
+example/
+output/
 
 !test.sh
