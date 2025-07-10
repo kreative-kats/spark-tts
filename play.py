@@ -96,7 +96,7 @@ if __name__ == "__main__":
     Path("output").mkdir(exist_ok=True)
     for audio_sample_path in audio_sample_paths:
         wav = main(prompt, [audio_sample_path])
-        sf.write(f"output/{audio_sample_path.stem}", wav, 16000)
+        sf.write(f"output/{audio_sample_path.name}", wav, 16000)
 
     weights = [0.333, 0.333, 0.333]
     wav = main(prompt, audio_sample_paths, weights=weights)
