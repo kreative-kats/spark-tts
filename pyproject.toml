@@ -1,0 +1,37 @@
+[project]
+name = "spark-tts"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+
+dependencies = [
+    "einops==0.8.1",
+    "einx==0.3.0",
+    "numpy==2.2.3",
+    "omegaconf==2.3.0",
+    "packaging==24.2",
+    "safetensors==0.5.2",
+    "soundfile==0.12.1",
+    "soxr==0.5.0.post1",
+    "torch==2.7.1",
+    "torchaudio==2.7.1",
+    "tqdm==4.66.5",
+    "transformers==4.46.2",
+    "gradio==5.18.0",
+]
+
+[dependency-groups]
+dev = [
+    "ipykernel>=6.29.5",
+    "ipywidgets>=8.1.7",
+    "pip>=25.1.1",
+    "pre-commit>=4.2.0",
+    "pytest>=8.3.5",
+    "ruff>=0.11.9",
+    "setuptools>=80.4.0",
+]
+
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
