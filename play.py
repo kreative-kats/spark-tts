@@ -11,19 +11,10 @@ import soundfile as sf
 import torch
 from huggingface_hub import snapshot_download
 
+import spark_tts.config as c
 from spark_tts.extensions.inference import run_inference
 from spark_tts.extensions.model import get_model_and_tokenizers, load_global_token_ids
 from spark_tts.extensions.utilities import get_prompt_segments, select_torch_device
-
-SPARK_TTS_MODEL_DIR = "pretrained_models/Spark-TTS-0.5B"
-PROMPT_SEGMENT_SIZE = 150
-DEFAULT_TEMPERATURE = 0.8
-DEFAULT_TOP_K = 50
-DEFAULT_TOP_P = 0.95
-
-LOGGING_CONFIG = logging.basicConfig(
-    level=logging.INFO, format="%(levelname)s:%(name)s:%(message)s"
-)
 
 warnings.filterwarnings("ignore")
 
@@ -33,15 +24,15 @@ def main(
     prompt: str,
     audio_sample_paths: list[Path],
     weights: list[float] | None = None,
-    temperature: float = DEFAULT_TEMPERATURE,
-    top_k: float = DEFAULT_TOP_K,
-    top_p: float = DEFAULT_TOP_P,
+    temperature: float = c.DEFAULT_TEMPERATURE,
+    top_k: float = c.DEFAULT_TOP_K,
+    top_p: float = c.DEFAULT_TOP_P,
 ) -> np.ndarray:
     """Runs the main workflow."""
-    logger = logging.getLogger(LOGGING_CONFIG)
+    logger = logging.getLogger(c.LOGGING_CONFIG)
 
     logger.info("Ensuring local snapshot of SparkAudio/Spark-TTS-0.5B.")
-    snapshot_download("SparkAudio/Spark-TTS-0.5B", local_dir=SPARK_TTS_MODEL_DIR)
+    snapshot_download("SparkAudio/Spark-TTS-0.5B", local_dir=c.SPARK_TTS_MODEL_DIR)
 
     logger.info(f"Blended weights: {weights}")
 
@@ -50,7 +41,7 @@ def main(
 
     logger.info("Loading model and tokenizers.")
     model, tokenizer, audio_tokenizer = get_model_and_tokenizers(
-        SPARK_TTS_MODEL_DIR, device=device
+        c.SPARK_TTS_MODEL_DIR, device=device
     )
 
     logger.info("Loading global token ids.")
@@ -62,7 +53,7 @@ def main(
     wavs = []
     model_params = dict(temperature=temperature, top_k=top_k, top_p=top_p)
 
-    for segment in get_prompt_segments(prompt, PROMPT_SEGMENT_SIZE):
+    for segment in get_prompt_segments(prompt, c.PROMPT_SEGMENT_SIZE):
         wav = run_inference(
             segment,
             model,

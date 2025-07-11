@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ruff: noqa
+import logging
 
 import torch
 import torch.nn as nn
@@ -21,6 +22,7 @@ from typing import Dict, Any
 from omegaconf import DictConfig
 from safetensors.torch import load_file
 
+from spark_tts.config import LOGGING_CONFIG
 from spark_tts.utils.file import load_config
 from spark_tts.modules.speaker.speaker_encoder import SpeakerEncoder
 from spark_tts.modules.encoder_decoder.feat_encoder import Encoder
@@ -101,10 +103,11 @@ class BiCodec(nn.Module):
         state_dict = load_file(ckpt_path)
         missing_keys, unexpected_keys = model.load_state_dict(state_dict, strict=False)
 
+        logger = logging.getLogger(LOGGING_CONFIG)
         for key in missing_keys:
-            print(f"Missing tensor: {key}")
+            logger.warning(f"Missing tensor: {key}")
         for key in unexpected_keys:
-            print(f"Unexpected tensor: {key}")
+            logger.warning(f"Unexpected tensor: {key}")
 
         model.eval()
         model.remove_weight_norm()

@@ -22,14 +22,16 @@ Description:
 # ruff: noqa
 
 import os
-import json
-import json
 import csv
+import json
+import logging
 
 from tqdm import tqdm
 from typing import List, Dict, Any
 from pathlib import Path
 from omegaconf import OmegaConf, DictConfig
+
+from spark_tts.config import LOGGING_CONFIG
 
 
 def resolve_symbolic_link(symbolic_link_path: Path) -> Path:
@@ -64,7 +66,9 @@ def write_jsonl(metadata: List[dict], file_path: Path) -> None:
             # Convert dictionary to JSON string and write it to the file with a newline
             json_str = json.dumps(meta, ensure_ascii=False) + "\n"
             f.write(json_str)
-    print(f"jsonl saved to {file_path}")
+
+    logger = logging.getLogger(LOGGING_CONFIG)
+    logger.info(f"jsonl saved to {file_path}")
 
 
 def read_jsonl(file_path: Path) -> List[dict]:
@@ -163,7 +167,8 @@ def jsonl_to_csv(jsonl_file_path: str, csv_file_path: str) -> None:
         for data in data_rows:
             writer.writerow(data)
 
-    print(f"CSV file has been created at {csv_file_path}")
+    logger = logging.getLogger(LOGGING_CONFIG)
+    logger.info(f"CSV file has been created at {csv_file_path}")
 
 
 def save_metadata(data, filename, headers=None):
