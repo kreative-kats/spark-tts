@@ -38,10 +38,9 @@ def get_id_from_paths_and_weights(paths: list[Path], weights: list[float]) -> st
 
 def select_torch_device() -> torch.device:
     """Returns the best torch device matching the system profile."""
-    if torch.cuda.is_available():
-        return torch.device("cuda")
-    if torch.mps.is_available():
-        return torch.device("mps")
+    if torch.accelerator.is_available():
+        return torch.accelerator.current_accelerator()
+
     return torch.device("cpu")
 
 
