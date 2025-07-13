@@ -78,16 +78,19 @@ def add_safe_globals() -> None:
 def get_model_and_tokenizers(
     model_dir: Path,
     device: torch.device | None = None,
-    pickle: bool = False,
+    cache_path: Path | None = None,
 ) -> tuple[PreTrainedModel, PreTrainedTokenizerFast, BiCodecTokenizerBlend]:
     """Returns the loaded causal LM, tokenizer and audio tokenizer for a pretrained model."""
     identifier = get_id_from_path(model_dir)
-    output_path = Path("output")
 
-    model_path = output_path / f"{identifier}_model.pt"
-    tokenizer_path = output_path / f"{identifier}_tokenizer.pt"
+    load_from_cache = False
+    if cache_path:
+        model_path = cache_path / f"{identifier}_model.pt"
+        tokenizer_path = cache_path / f"{identifier}_tokenizer.pt"
 
-    if pickle and all(path.exists() for path in (model_path, tokenizer_path)):
+        load_from_cache = model_path.exists() and tokenizer_path.exists()
+
+    if load_from_cache:
         add_safe_globals()
         model = torch.load(model_path)
         tokenizer = torch.load(tokenizer_path)
@@ -95,7 +98,7 @@ def get_model_and_tokenizers(
         model = AutoModelForCausalLM.from_pretrained(f"{model_dir}/LLM")
         tokenizer = AutoTokenizer.from_pretrained(f"{model_dir}/LLM")
 
-        if pickle:
+        if cache_path:
             torch.save(model, model_path)
             torch.save(tokenizer, tokenizer_path)
 
@@ -107,24 +110,32 @@ def get_model_and_tokenizers(
 
 # TODO: Deprecate
 def load_sample_token_ids(
-    audio_sample_path: Path, audio_tokenizer: BiCodecTokenizer | BiCodecTokenizerBlend
+    audio_sample_path: Path,
+    audio_tokenizer: BiCodecTokenizer | BiCodecTokenizerBlend,
+    cache_path: Path | None = None,
 ) -> tuple[torch.Tensor, torch.Tensor]:
     """Returns the global and semantic token id-s for the audio sample at sample_path."""
     identifier = get_id_from_path(audio_sample_path)
-    output_path = Path("output")
 
-    global_token_ids_path = output_path / f"{identifier}_global_token_ids.pt"
-    semantic_token_ids_path = output_path / f"{identifier}_semantic_token_ids.pt"
+    load_from_cache = False
+    if cache_path:
+        global_token_ids_path = cache_path / f"{identifier}_global_token_ids.pt"
+        semantic_token_ids_path = cache_path / f"{identifier}_semantic_token_ids.pt"
+        load_from_cache = (
+            global_token_ids_path.exists() and semantic_token_ids_path.exists()
+        )
 
-    if global_token_ids_path.exists() and semantic_token_ids_path.exists():
+    if load_from_cache:
         global_token_ids = torch.load(global_token_ids_path)
         semantic_token_ids = torch.load(semantic_token_ids_path)
     else:
         global_token_ids, semantic_token_ids = audio_tokenizer.tokenize(
             audio_sample_path
         )
-        torch.save(global_token_ids, global_token_ids_path)
-        torch.save(semantic_token_ids, semantic_token_ids_path)
+
+        if cache_path:
+            torch.save(global_token_ids, global_token_ids_path)
+            torch.save(semantic_token_ids, semantic_token_ids_path)
 
     return global_token_ids, semantic_token_ids
 
@@ -134,29 +145,25 @@ def load_global_token_ids(
     audio_tokenizer: BiCodecTokenizerBlend,
     device: torch.device,
     weights: list[float] | None = None,
-    pickle: bool = False,
+    cache_path: Path | None = None,
 ) -> torch.Tensor:
     """Returns the global and semantic token id-s for the audio sample at sample_path."""
     weights = sanitize_weights(weights or len(audio_sample_paths))
     identifier = get_id_from_paths_and_weights(audio_sample_paths, weights)
-    output_path = Path("output")
 
-    global_token_ids_path = output_path / f"{identifier}_global_token_ids.pt"
+    load_from_cache = False
+    if cache_path:
+        global_token_ids_path = cache_path / f"{identifier}_global_token_ids.pt"
+        load_from_cache = global_token_ids_path.exists()
 
-    if pickle and global_token_ids_path.exists():
+    if load_from_cache:
         global_token_ids = torch.load(global_token_ids_path)
     else:
         global_token_ids = audio_tokenizer.tokenize_blend(
             audio_sample_paths, device, weights
         )
-        # global_token_ids = [
-        #     audio_tokenizer.tokenize(path)[0] for path in audio_sample_paths
-        # ]
-        # global_token_ids = combine_tensors(
-        #     global_token_ids, weights=weights, as_int=True
-        # )
 
-        if pickle:
+        if cache_path:
             torch.save(global_token_ids, global_token_ids_path)
 
     return global_token_ids
